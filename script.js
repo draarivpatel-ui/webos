@@ -19,6 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ---------- clock ---------- */
+const BOOT_AT = Date.now(); // session start — uptime source for System Monitor
 function tick() {
   const n = new Date();
   $("#tb-clock").textContent = n.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -79,6 +80,8 @@ function closeWindow(id) {
   $("#tb-app").textContent = "";
 }
 
+const openWindowCount = () => openWindows.size; // live count for System Monitor
+
 function raise(el) {
   el.style.zIndex = ++topZ;
   document.querySelectorAll(".window").forEach((w) => w.classList.toggle("focused", w === el));
@@ -125,7 +128,8 @@ Apps.push({
       <h2 style="color:var(--accent);font-size:16px;margin-bottom:8px">AarivOS</h2>
       <p style="color:var(--dim)">A tiny operating system that runs in a browser tab.
       Built from the Hack Club webOS jam and customized: real window manager
-      (drag, focus, close), a virtual file system, notes, a terminal, paint, and settings
+      (drag, focus, close), a virtual file system, notes, a text editor, a synth,
+      a terminal, paint, a system monitor, and settings
       that remember your wallpaper. Everything lives in localStorage — nothing leaves this tab.</p>
       <p style="margin-top:10px;font-size:12px;color:var(--dim)">Built by Aariv Patel with AI coding agents under his direction.</p>`;
   },
@@ -307,6 +311,224 @@ Apps.push({
     drawSw();
 
     return () => { clearInterval(clockTimer); clearInterval(swTimer); };
+  },
+});
+
+Apps.push({
+  id: "editor", name: "Text Editor", glyph: "📄", w: 420, h: 320,
+  render(body) {
+    body.innerHTML = '<div class="editor-wrap">' +
+      '<div class="editor-bar">' +
+      '<input class="editor-name" value="untitled.txt" spellcheck="false" autocomplete="off" aria-label="File name">' +
+      '<button class="btn" data-act="save">Save</button></div>' +
+      '<div class="saved-flash"></div>' +
+      '<textarea class="notes-area" aria-label="File contents"></textarea></div>';
+    const name = $(".editor-name", body);
+    const ta = $("textarea", body);
+    const flash = $(".saved-flash", body);
+    const save = () => {
+      const fname = name.value.trim() || "untitled.txt";
+      const fs = store.get("fs", {});
+      fs[fname] = ta.value;
+      store.set("fs", fs);
+      name.value = fname;
+      flash.textContent = "saved /home/aariv/" + fname + " ✓";
+    };
+    $('[data-act="save"]', body).addEventListener("click", save);
+    ta.addEventListener("input", () => { flash.textContent = ""; });
+    name.addEventListener("input", () => { flash.textContent = ""; });
+    body.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); save(); }
+    });
+    setTimeout(() => { name.focus(); name.select(); }, 50);
+  },
+});
+
+Apps.push({
+  id: "music", name: "Music", glyph: "🎹", w: 460, h: 330,
+  render(body) {
+    // one octave C4-C5; b = white-key boundary a sharp sits behind (grid of 8)
+    const NOTES = [
+      { n: "C4", f: 261.63, k: "a" },
+      { n: "C#4", f: 277.18, k: "w", b: 1, black: true },
+      { n: "D4", f: 293.66, k: "s" },
+      { n: "D#4", f: 311.13, k: "e", b: 2, black: true },
+      { n: "E4", f: 329.63, k: "d" },
+      { n: "F4", f: 349.23, k: "f" },
+      { n: "F#4", f: 369.99, k: "t", b: 4, black: true },
+      { n: "G4", f: 392.00, k: "g" },
+      { n: "G#4", f: 415.30, k: "y", b: 5, black: true },
+      { n: "A4", f: 440.00, k: "h" },
+      { n: "A#4", f: 466.16, k: "u", b: 6, black: true },
+      { n: "B4", f: 493.88, k: "j" },
+      { n: "C5", f: 523.25, k: "k" },
+    ];
+    let wi = 0;
+    const keysHtml = NOTES.map((nt) => {
+      const hint = nt.n + (nt.black ? " (sharp)" : "") + ", key " + nt.k.toUpperCase();
+      if (!nt.black) {
+        return '<button class="pkey" data-n="' + nt.n + '" style="left:' + (wi++ * 12.5) +
+          '%;width:12.5%" aria-label="' + hint + '"><span>' + nt.k.toUpperCase() + "</span></button>";
+      }
+      return '<button class="pkey black" data-n="' + nt.n + '" style="left:' + (nt.b * 12.5 - 3.75) +
+        '%;width:7.5%" aria-label="' + hint + '"><span>' + nt.k.toUpperCase() + "</span></button>";
+    }).join("");
+    body.innerHTML = '<div class="music-row">' +
+      '<label style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--dim)">Wave ' +
+      '<select data-act="wave" aria-label="Oscillator wave"><option value="sine">sine</option><option value="triangle">triangle</option></select></label>' +
+      '<button class="btn" data-act="rec">● rec</button>' +
+      '<button class="btn" data-act="play">▶ replay</button>' +
+      '<button class="btn" data-act="clear">clear</button>' +
+      '<span class="music-count" style="font-size:11px;color:var(--dim)"></span></div>' +
+      '<div class="piano">' + keysHtml + "</div>" +
+      '<div class="music-note">Click the keys or play from your keyboard: A S D F G H J K (+ W E T Y U for sharps).</div>';
+
+    const piano = $(".piano", body);
+    const keyEls = {};
+    NOTES.forEach((nt) => { keyEls[nt.n] = $('[data-n="' + nt.n + '"]', body); });
+    const countEl = $(".music-count", body);
+    const recBtn = $('[data-act="rec"]', body);
+    const playBtn = $('[data-act="play"]', body);
+
+    let ctx = null, wave = "sine";
+    const ensureCtx = () => {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    };
+    const playNote = (f, dur = 0.45) => {
+      const ac = ensureCtx();
+      const t0 = ac.currentTime;
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = wave; osc.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.05);
+    };
+
+    let recOn = false, take = [], recStart = 0, playing = false;
+    const timers = [];
+    const flash = (n) => {
+      const el = keyEls[n]; if (!el) return;
+      el.classList.add("down");
+      timers.push(setTimeout(() => el.classList.remove("down"), 180));
+    };
+    const drawCount = () => {
+      countEl.textContent = take.length ? take.length + (take.length === 1 ? " note" : " notes") : "";
+      playBtn.disabled = !take.length || playing;
+    };
+    const press = (n) => {
+      const nt = NOTES.find((x) => x.n === n); if (!nt) return;
+      playNote(nt.f);
+      flash(n);
+      if (recOn) { take.push({ n, t: performance.now() - recStart }); drawCount(); }
+    };
+
+    piano.addEventListener("pointerdown", (e) => {
+      const el = e.target.closest(".pkey"); if (el) press(el.dataset.n);
+    });
+    const onKeys = (e) => {
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target.closest && e.target.closest("input, textarea, select")) return;
+      const nt = NOTES.find((x) => x.k === e.key.toLowerCase());
+      if (nt) { e.preventDefault(); press(nt.n); }
+    };
+    window.addEventListener("keydown", onKeys);
+
+    recBtn.addEventListener("click", () => {
+      recOn = !recOn;
+      if (recOn) { take = []; recStart = performance.now(); }
+      recBtn.textContent = recOn ? "■ stop" : "● rec";
+      recBtn.classList.toggle("rec-on", recOn);
+      drawCount();
+    });
+    playBtn.addEventListener("click", () => {
+      if (!take.length || playing) return;
+      playing = true; playBtn.disabled = true;
+      const total = take[take.length - 1].t + 450;
+      take.forEach((ev) => {
+        const nt = NOTES.find((x) => x.n === ev.n); if (!nt) return;
+        timers.push(setTimeout(() => { playNote(nt.f); flash(ev.n); }, ev.t));
+      });
+      timers.push(setTimeout(() => { playing = false; drawCount(); }, total));
+    });
+    $('[data-act="clear"]', body).addEventListener("click", () => {
+      take = []; recOn = false;
+      recBtn.textContent = "● rec"; recBtn.classList.remove("rec-on");
+      drawCount();
+    });
+    $('[data-act="wave"]', body).addEventListener("change", (e) => { wave = e.target.value; });
+    drawCount();
+
+    return () => {
+      timers.forEach(clearTimeout);
+      window.removeEventListener("keydown", onKeys);
+      if (ctx) ctx.close();
+      ctx = null;
+    };
+  },
+});
+
+Apps.push({
+  id: "sysmon", name: "System Monitor", glyph: "📊", w: 380, h: 300,
+  render(body) {
+    body.innerHTML =
+      '<div class="mon-row"><span class="mon-label">CPU</span>' +
+      '<div class="mon-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="CPU usage"><div class="mon-fill" data-k="cpu"></div></div>' +
+      '<span class="mon-val" data-v="cpu">--%</span></div>' +
+      '<div class="mon-row" style="margin-top:10px"><span class="mon-label">MEM</span>' +
+      '<div class="mon-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Memory usage"><div class="mon-fill" data-k="mem"></div></div>' +
+      '<span class="mon-val" data-v="mem">--%</span></div>' +
+      '<div class="mon-stats">' +
+      '<div class="mon-stat"><span class="mon-k">Uptime</span><span class="mon-v" data-v="up">0:00:00</span></div>' +
+      '<div class="mon-stat"><span class="mon-k">Windows</span><span class="mon-v" data-v="win">' + openWindowCount() + "</span></div>" +
+      "</div>" +
+      '<div><div class="mon-k">Processes (live)</div><div class="mon-list" data-v="procs"></div></div>';
+
+    const cpuFill = $('[data-k="cpu"]', body), memFill = $('[data-k="mem"]', body);
+    const cpuVal = $('[data-v="cpu"]', body), memVal = $('[data-v="mem"]', body);
+    const upVal = $('[data-v="up"]', body), winVal = $('[data-v="win"]', body);
+    const procsEl = $('[data-v="procs"]', body);
+    const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+    const fmtUp = (ms) => {
+      const s = Math.floor(ms / 1000);
+      return Math.floor(s / 3600) + ":" + String(Math.floor(s / 60) % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+    };
+    let cpu = 22, mem = 38, cpuT = cpu, memT = mem, frame = 0, lastProcs = "";
+    let raf;
+    const loop = () => {
+      frame++;
+      const wins = openWindowCount();
+      if (frame % 40 === 0) { // new noise target ~every 2/3s; more windows = busier
+        cpuT = clamp(8 + wins * 4 + Math.random() * 34, 5, 97);
+        memT = clamp(24 + wins * 5 + Math.random() * 14, 18, 92);
+      }
+      cpu += (cpuT - cpu) * 0.055;
+      mem += (memT - mem) * 0.055;
+      cpuFill.style.width = cpu.toFixed(1) + "%";
+      memFill.style.width = mem.toFixed(1) + "%";
+      if (frame % 12 === 0) {
+        cpuVal.textContent = Math.round(cpu) + "%";
+        memVal.textContent = Math.round(mem) + "%";
+        cpuFill.parentElement.setAttribute("aria-valuenow", Math.round(cpu));
+        memFill.parentElement.setAttribute("aria-valuenow", Math.round(mem));
+        upVal.textContent = fmtUp(Date.now() - BOOT_AT);
+        winVal.textContent = wins;
+      }
+      const sig = [...openWindows.keys()].join();
+      if (sig !== lastProcs) {
+        lastProcs = sig;
+        procsEl.innerHTML = sig
+          ? [...openWindows.keys()].map((id) => { const a = Apps.find((x) => x.id === id); return '<span class="proc">' + (a ? a.name : id) + "</span>"; }).join("")
+          : '<span class="proc">nothing running — open an app!</span>';
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
   },
 });
 

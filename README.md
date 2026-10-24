@@ -6,13 +6,17 @@ webOS jam (batch guide) and customized:
 - **Window manager** exactly like the jam teaches: one `createWindow`
   initializer, drag-by-handle, close dots, raise-on-focus z-index.
 - **Boot screen**, top bar with a live clock and focused-app name.
-- **Six apps**: About, Files (persistent virtual file system in localStorage,
-  click a file to read it), Notes (autosaves, files appear in Files), Terminal
-  (`help`, `ls`, `cat`, `echo`, `date`, `whoami`, `open <app>`, `clear`), Paint
-  (canvas doodle with color and brush size), Settings (three wallpapers,
-  erase-all — persisted).
+- **Nine apps**: About, Files (persistent virtual file system in localStorage,
+  click a file to read it), Notes (autosaves, files appear in Files), Text
+  Editor (name + Save writes into the same file system, ⌘/Ctrl+S works), Music
+  (Web Audio synth — one octave C4–C5 with sharps, sine/triangle toggle,
+  record & replay, playable from your computer keyboard), Terminal (`help`,
+  `ls`, `cat`, `echo`, `date`, `whoami`, `open <app>`, `clear`), Paint (canvas
+  doodle with color and brush size), System Monitor (live CPU/MEM bars, uptime
+  counter, real open-window count), Settings (three wallpapers, erase-all —
+  persisted).
 - Vanilla HTML/CSS/JS, zero dependencies, keyboard accessible (Enter opens an
-  icon, Esc closes the focused window).
+  icon, Esc closes the focused window, the synth is playable from the A–K row).
 
 Live: https://aariv.me/webos/
 
