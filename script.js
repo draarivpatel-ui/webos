@@ -63,17 +63,17 @@ function createWindow(app) {
   close.style.cursor = "pointer";
   close.addEventListener("click", () => closeWindow(app.id));
 
-  openWindows.set(app.id, { el });
+  const cleanup = app.render(body, el);
+  openWindows.set(app.id, { el, cleanup: typeof cleanup === "function" ? cleanup : null });
   $("#windows").appendChild(el);
   $("#tb-app").textContent = "— " + app.name;
-
-  app.render(body, el);
   return el;
 }
 
 function closeWindow(id) {
   const w = openWindows.get(id);
   if (!w) return;
+  if (w.cleanup) w.cleanup();
   w.el.remove();
   openWindows.delete(id);
   $("#tb-app").textContent = "";
@@ -244,6 +244,69 @@ Apps.push({
       Object.keys(localStorage).filter((k) => k.startsWith("aarivos:")).forEach((k) => localStorage.removeItem(k));
       body.innerHTML = '<p style="color:var(--dim)">Everything erased. Reopen Settings to start fresh.</p>';
     });
+  },
+});
+
+Apps.push({
+  id: "clock", name: "Clock", glyph: "🕒", w: 320, h: 280,
+  render(body) {
+    const btnStyle = "flex:1;background:var(--panel-2);color:var(--text);border:1px solid var(--line);" +
+      "border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px";
+    body.innerHTML = '<div style="text-align:center">' +
+      '<div class="clock-time" style="font:600 42px/1.1 ui-monospace,\'SF Mono\',Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--accent)">--:--:--</div>' +
+      '<div class="clock-date" style="margin-top:4px;font-size:12px;color:var(--dim)">&nbsp;</div>' +
+      '</div>' +
+      '<div style="margin:16px 0 10px;border-top:1px solid var(--line)"></div>' +
+      '<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px">Stopwatch</div>' +
+      '<div class="sw-display" style="font:500 26px/1.2 ui-monospace,\'SF Mono\',Menlo,monospace;font-variant-numeric:tabular-nums">00:00.0</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button data-act="toggle" style="' + btnStyle + '">start</button>' +
+      '<button data-act="reset" style="' + btnStyle + '">reset</button></div>';
+
+    const timeEl = $(".clock-time", body);
+    const dateEl = $(".clock-date", body);
+    const swEl = $(".sw-display", body);
+    const toggle = $('[data-act="toggle"]', body);
+    const reset = $('[data-act="reset"]', body);
+
+    const drawClock = () => {
+      const n = new Date();
+      timeEl.textContent = n.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      dateEl.textContent = n.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+    };
+    drawClock();
+    const clockTimer = setInterval(drawClock, 1000);
+
+    let elapsed = 0, startedAt = 0, running = false;
+    const fmt = (ms) => {
+      const tenths = Math.floor(ms / 100) % 10;
+      const secs = Math.floor(ms / 1000) % 60;
+      const mins = Math.floor(ms / 60000);
+      return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0") + "." + tenths;
+    };
+    const drawSw = () => { swEl.textContent = fmt(elapsed + (running ? performance.now() - startedAt : 0)); };
+    const swTimer = setInterval(() => { if (running) drawSw(); }, 100);
+
+    toggle.addEventListener("click", () => {
+      if (running) {
+        elapsed += performance.now() - startedAt;
+        running = false;
+        toggle.textContent = "start";
+      } else {
+        startedAt = performance.now();
+        running = true;
+        toggle.textContent = "stop";
+      }
+      drawSw();
+    });
+    reset.addEventListener("click", () => {
+      elapsed = 0; running = false;
+      toggle.textContent = "start";
+      drawSw();
+    });
+    drawSw();
+
+    return () => { clearInterval(clockTimer); clearInterval(swTimer); };
   },
 });
 
