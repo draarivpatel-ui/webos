@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AarivOS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23141b2e'/%3E%3Cpath d='M18 14h20l8 8v28a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z' fill='%23f5a742'/%3E%3Cpath d='M38 14l8 8h-8z' fill='%23c77f1f'/%3E%3Ccircle cx='26' cy='30' r='2.5' fill='%23141b2e'/%3E%3Ccircle cx='38' cy='30' r='2.5' fill='%23141b2e'/%3E%3Cpath d='M25 39q7 6 14 0' stroke='%23141b2e' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="boot" aria-hidden="true">
+  <div class="boot-star">✦</div>
+  <div class="boot-name">AarivOS</div>
+  <div class="boot-bar"><span></span></div>
+</div>
+
+<div id="desktop" hidden>
+  <div id="wall"></div>
+
+  <header id="topbar">
+    <span class="tb-left"><strong>AarivOS</strong><span id="tb-app"></span></span>
+    <span class="tb-right"><span id="tb-clock">--:--</span></span>
+  </header>
+
+  <nav id="icons" aria-label="Apps"></nav>
+  <div id="windows"></div>
+  <div id="dock-hint">Double-click an icon to open · drag windows by their handle</div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
