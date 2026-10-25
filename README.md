@@ -18,7 +18,15 @@ webOS jam (batch guide) and customized:
 - Vanilla HTML/CSS/JS, zero dependencies, keyboard accessible (Enter opens an
   icon, Esc closes the focused window, the synth is playable from the A–K row).
 
+![AarivOS running three apps at once](screenshot.png)
+
 Live: https://aariv.me/webos/
+
+## Why I built this
+
+The Hack Club webOS mission said "make it yours", so I did what I always
+do: gave it ten real apps instead of two toy ones and made the terminal able
+to open the rest. The studio method, pointed at a mission.
 
 ## Honest AI note
 
