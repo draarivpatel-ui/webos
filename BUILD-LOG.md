@@ -15,9 +15,9 @@ Followed the Hack Club webOS jam (jams.hackclub.com/batch/webOS) parts 1-4.
 9. Verified in a real browser: boot, 2 windows, terminal help/ls/cat, screenshot.
 10. Added Text Editor: filename + Save writes into the same localStorage FS as
     Files/Notes, so saved files show up in Files automatically; ⌘/Ctrl+S saves.
-11. Added Music: Web Audio synth, one octave C4–C5 (with black keys), sine/
+11. Added Music: Web Audio synth, one octave C4-C5 (with black keys), sine/
     triangle toggle, record + replay of the take, also playable from the
-    A–K / W E T Y U computer keys. AudioContext and timers are cleaned up when
+    A-K / W E T Y U computer keys. AudioContext and timers are cleaned up when
     the window closes (render-cleanup pattern).
 12. Added System Monitor: requestAnimationFrame noise-driven CPU/MEM bars that
     also react to how many windows are open, a real uptime counter, and a live

@@ -1,4 +1,4 @@
-/* AarivOS — window system + apps, following the Hack Club webOS jam
+/* AarivOS - window system + apps, following the Hack Club webOS jam
    (icons with selection state, one createWindow initializer, drag via
    handle, close buttons, raise-on-focus z-index) and customized. */
 "use strict";
@@ -19,7 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ---------- clock ---------- */
-const BOOT_AT = Date.now(); // session start — uptime source for System Monitor
+const BOOT_AT = Date.now(); // session start - uptime source for System Monitor
 function tick() {
   const n = new Date();
   $("#tb-clock").textContent = n.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -67,7 +67,7 @@ function createWindow(app) {
   const cleanup = app.render(body, el);
   openWindows.set(app.id, { el, cleanup: typeof cleanup === "function" ? cleanup : null });
   $("#windows").appendChild(el);
-  $("#tb-app").textContent = "— " + app.name;
+  $("#tb-app").textContent = "- " + app.name;
   return el;
 }
 
@@ -130,7 +130,7 @@ Apps.push({
       Built from the Hack Club webOS jam and customized: real window manager
       (drag, focus, close), a virtual file system, notes, a text editor, a synth,
       a terminal, paint, a system monitor, and settings
-      that remember your wallpaper. Everything lives in localStorage — nothing leaves this tab.</p>
+      that remember your wallpaper. Everything lives in localStorage - nothing leaves this tab.</p>
       <p style="margin-top:10px;font-size:12px;color:var(--dim)">Built by Aariv Patel with AI coding agents under his direction.</p>`;
   },
 });
@@ -187,7 +187,7 @@ Apps.push({
 Apps.push({
   id: "terminal", name: "Terminal", glyph: "›_", w: 420, h: 280,
   render(body) {
-    body.innerHTML = '<div class="term"><div class="out"><b>AarivOS</b> terminal — try <b>help</b></div></div>' +
+    body.innerHTML = '<div class="term"><div class="out"><b>AarivOS</b> terminal - try <b>help</b></div></div>' +
       '<div class="term-row"><span class="ps">aariv@os:~$</span><input autocomplete="off" spellcheck="false"></div>';
     const out = $(".out", body); const input = $("input", body);
     const print = (s) => { out.insertAdjacentHTML("beforeend", "\n" + s); body.scrollTop = body.scrollHeight; };
@@ -203,7 +203,7 @@ Apps.push({
         cat: (f) => print(fs[f] !== undefined ? String(fs[f]).replace(/</g, "&lt;") : "cat: " + (f || "?") + ": no such file"),
         echo: (...w) => print(w.join(" ")),
         date: () => print(new Date().toString()),
-        whoami: () => print("aariv — builder of this os"),
+        whoami: () => print("aariv - builder of this os"),
         open: (a) => { const app = Apps.find((x) => x.id === a); if (app) { createWindow(app); print("opened " + app.name); } else print("no app: " + (a || "?")); },
         clear: () => { out.innerHTML = ""; },
       };
@@ -523,7 +523,7 @@ Apps.push({
         lastProcs = sig;
         procsEl.innerHTML = sig
           ? [...openWindows.keys()].map((id) => { const a = Apps.find((x) => x.id === id); return '<span class="proc">' + (a ? a.name : id) + "</span>"; }).join("")
-          : '<span class="proc">nothing running — open an app!</span>';
+          : '<span class="proc">nothing running - open an app!</span>';
       }
       raf = requestAnimationFrame(loop);
     };
