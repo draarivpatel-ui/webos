@@ -6,17 +6,15 @@
 
 I built **AarivOS** for the Hack Club Stardance **webOS** mission. Starting from the Hack Club webOS jam guide's window-management fundamentals, I expanded the desktop into a complete, zero-dependency browser operating system with a boot sequence, a focus-aware window manager, a shared `localStorage` virtual file system, and **nine interactive desktop apps** that talk to each other.
 
----
 
 ## Why I Built This
 
 The Hack Club webOS guide walks through building a desktop shell, draggable windows, and a couple of starter windows, then challenges you to make the OS unmistakably your own. I have always loved poking around retro desktop environments and terminal multiplexers, so instead of stopping at static info windows, I wanted to build an OS where the apps actually share state:
 
-- If you write a note in **Notes** or save a document in **Text Editor** (`Cmd/Ctrl + S`), that file immediately exists in the shared virtual file system—so you can open **Files** to inspect it or run `ls` and `cat <filename>` inside **Terminal** to print its contents!
+- If you write a note in **Notes** or save a document in **Text Editor** (`Cmd/Ctrl + S`), that file immediately exists in the shared virtual file system - so you can open **Files** to inspect it or run `ls` and `cat <filename>` inside **Terminal** to print its contents!
 - If you run `open music` or `open paint` in **Terminal**, the shell spawns that desktop window and brings it to the front.
 - If you open **System Monitor**, the CPU/memory bars and process list reflect the actual live windows currently open in the `openWindows` map.
 
----
 
 ## All 9 Built-In Applications
 
@@ -32,7 +30,6 @@ The Hack Club webOS guide walks through building a desktop shell, draggable wind
 | **8. System Monitor (`sysmon`)** | `%` | Live task manager running on `requestAnimationFrame` that displays system uptime since boot, real-time CPU and memory utilization bars scaled by active window load, and process chips for every open app. |
 | **9. Settings (`settings`)** | `::` | Control panel to switch between 3 custom desktop wallpapers (saved across reloads) and a factory **Erase All Storage** button to reset the virtual file system. |
 
----
 
 ## How the Window Manager & Virtual File System Work
 
@@ -43,7 +40,6 @@ The Hack Club webOS guide walks through building a desktop shell, draggable wind
 3. **Shared `localStorage` File System**:
    I wrote `loadFS()` and `saveFS()` helpers around `localStorage` seeded with starter files (`welcome.txt`, `readme.md`, `shortcuts.txt`). Because **Files**, **Notes**, **Text Editor**, and **Terminal** all read and write through the same store and trigger `refreshFilesViews()`, changes in one app show up immediately in the others.
 
----
 
 ## What Was Tricky to Debug
 
@@ -52,7 +48,6 @@ The Hack Club webOS guide walks through building a desktop shell, draggable wind
 - **Escaping Terminal Output Safely**:
    Early on, printing command output in **Terminal** showed raw HTML tags as literal characters because of how line nodes were appended. I wrote an explicit `escapeHtml()` sanitizer paired with structured line builders so `ls`, `cat`, and `help` render crisp formatted output without allowing HTML injection when running `echo <script>`.
 
----
 
 ## Keyboard Shortcuts
 
@@ -61,7 +56,6 @@ The Hack Club webOS guide walks through building a desktop shell, draggable wind
 - **`Cmd + S` / `Ctrl + S`** (inside Text Editor) -> Save file to virtual file system
 - **`A S D F G H J K`** & **`W E T Y U`** (when Music Synth is focused) -> Play piano notes `C4` through `C5`
 
----
 
 ## How to Run Locally
 
