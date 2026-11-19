@@ -4,6 +4,7 @@
 "use strict";
 
 const $ = (sel, el = document) => el.querySelector(sel);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => "&#" + c.charCodeAt(0) + ";");
 const store = {
   get(k, d) { try { const v = localStorage.getItem("aarivos:" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem("aarivos:" + k, JSON.stringify(v)); } catch {} },
@@ -144,16 +145,16 @@ Apps.push({
       body.innerHTML = '<div class="path">/home/aariv' + (path ? "/" + path : "") + "</div>" +
         '<div class="filelist">' +
         (names.map((n) =>
-          '<div class="filerow" data-f="' + n + '"><span class="name">' + n + "</span>" +
+          '<div class="filerow" data-f="' + esc(n) + '"><span class="name">' + esc(n) + "</span>" +
           '<span class="meta">' + (fs[n].length || 1) + " bytes</span></div>"
         ).join("") || '<div class="filerow"><span class="name" style="color:var(--dim)">(empty)</span></div>') +
         "</div>";
       body.querySelectorAll(".filerow[data-f]").forEach((row) => {
         row.addEventListener("click", () => {
           const name = row.dataset.f;
-          body.innerHTML = '<div class="path">/home/aariv/' + name + '</div>' +
+          body.innerHTML = '<div class="path">/home/aariv/' + esc(name) + '</div>' +
             '<pre style="white-space:pre-wrap;font:12.5px ui-monospace,monospace;color:var(--dim)">' +
-            String(fs[name]).replace(/</g, "&lt;") + "</pre>" +
+            esc(fs[name]) + "</pre>" +
             '<div style="margin-top:10px"><button class="tb-btn" style="background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer">← back</button></div>';
           body.querySelector("button").addEventListener("click", () => draw());
         });
@@ -194,20 +195,20 @@ Apps.push({
     input.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
       const line = input.value.trim(); input.value = "";
-      print('<span style="color:var(--accent)">aariv@os:~$</span> ' + line.replace(/</g, "&lt;"));
+      print('<span style="color:var(--accent)">aariv@os:~$</span> ' + esc(line));
       const [cmd, ...rest] = line.split(/\s+/);
       const fs = store.get("fs", {});
       const cmds = {
         help: () => print("commands: help, ls, cat &lt;file&gt;, echo, date, whoami, open &lt;app&gt;, clear"),
-        ls: () => print(Object.keys(fs).join("  ") || "(empty)"),
-        cat: (f) => print(fs[f] !== undefined ? String(fs[f]).replace(/</g, "&lt;") : "cat: " + (f || "?") + ": no such file"),
-        echo: (...w) => print(w.join(" ")),
+        ls: () => print(esc(Object.keys(fs).join("  ")) || "(empty)"),
+        cat: (f) => print(fs[f] !== undefined ? esc(fs[f]) : "cat: " + esc(f || "?") + ": no such file"),
+        echo: (...w) => print(esc(w.join(" "))),
         date: () => print(new Date().toString()),
         whoami: () => print("aariv - builder of this os"),
-        open: (a) => { const app = Apps.find((x) => x.id === a); if (app) { createWindow(app); print("opened " + app.name); } else print("no app: " + (a || "?")); },
+        open: (a) => { const app = Apps.find((x) => x.id === a); if (app) { createWindow(app); print("opened " + app.name); } else print("no app: " + esc(a || "?")); },
         clear: () => { out.innerHTML = ""; },
       };
-      (cmds[cmd] || (() => print(cmd ? cmd + ": command not found" : "")))(...rest);
+      (cmds[cmd] || (() => print(cmd ? esc(cmd) + ": command not found" : "")))(...rest);
     });
     setTimeout(() => input.focus(), 50);
   },
